@@ -5,6 +5,7 @@ from app.connectors.cms import publish_update
 from app.models.opportunity_brief import OpportunityBrief
 from app.models.opportunity_draft import OpportunityDraft
 from app.models.opportunity_publication import OpportunityPublication
+from app.models.project_publisher_config import ProjectPublisherConfig
 from app.models.opportunity_review import OpportunityReview
 from app.models.page import Page
 from app.utils.ids import as_uuid
@@ -76,6 +77,9 @@ def publish_approved_draft(db: Session, draft_id: str) -> OpportunityPublication
 
     brief = db.get(OpportunityBrief, draft.opportunity_brief_id)
     page = db.get(Page, draft.target_page_id) if draft.target_page_id else None
+    publisher_config = db.scalar(
+        select(ProjectPublisherConfig).where(ProjectPublisherConfig.project_id == draft.project_id).limit(1)
+    )
     target_url = page.normalized_url if page else brief.brief_json.get("target_url") if brief else None
 
     connector_result = publish_update(
@@ -84,7 +88,11 @@ def publish_approved_draft(db: Session, draft_id: str) -> OpportunityPublication
             "target_url": target_url,
             "content_markdown": draft.content_markdown,
             "draft_id": str(draft.id),
+            "title": brief.brief_json.get("title_options", [None])[0] if brief else None,
         },
+        provider=publisher_config.provider if publisher_config else "generic_rest",
+        mode=publisher_config.mode if publisher_config else "draft",
+        config=publisher_config.config_json if publisher_config else {},
     )
 
     publication.published = True

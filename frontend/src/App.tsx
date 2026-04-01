@@ -6,6 +6,7 @@ import {
   OpportunityBrief,
   OpportunityCluster,
   OpportunityDraft,
+  OpportunityEvidence,
   OpportunityPublication,
   OpportunityReview,
   Project,
@@ -13,6 +14,7 @@ import {
   addEvidence,
   approveDraft,
   createProject,
+  fetchEvidence,
   fetchProjects,
   fetchWorkflowBriefs,
   fetchWorkflowClusters,
@@ -38,6 +40,7 @@ type WorkflowState = {
   drafts: OpportunityDraft[];
   reviews: OpportunityReview[];
   publications: OpportunityPublication[];
+  evidence: OpportunityEvidence[];
   links: Array<{
     id: string;
     source_url: string;
@@ -54,6 +57,7 @@ const emptyWorkflow: WorkflowState = {
   drafts: [],
   reviews: [],
   publications: [],
+  evidence: [],
   links: []
 };
 
@@ -68,6 +72,8 @@ export function App() {
   const [workflow, setWorkflow] = useState<WorkflowState>(emptyWorkflow);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [evidenceTitle, setEvidenceTitle] = useState("");
+  const [evidenceBody, setEvidenceBody] = useState("");
 
   async function loadProjects() {
     try {
@@ -92,7 +98,8 @@ export function App() {
         fetchWorkflowPublications(projectId),
         fetchWorkflowLinks(projectId)
       ]);
-      setWorkflow({ overview, clusters, briefs, drafts, reviews, publications, links });
+      const evidence: OpportunityEvidence[] = [];
+      setWorkflow({ overview, clusters, briefs, drafts, reviews, publications, links, evidence });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load workflow");
     }
@@ -140,6 +147,17 @@ export function App() {
       null
     );
   }, [selectedDraft, workflow.publications]);
+
+  useEffect(() => {
+    if (!selectedBrief) return;
+    fetchEvidence(selectedBrief.id)
+      .then((evidence) => {
+        setWorkflow((current) => ({ ...current, evidence }));
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load evidence");
+      });
+  }, [selectedBrief?.id]);
 
   async function runAction(label: string, action: () => Promise<unknown>) {
     if (!selectedProjectId) return;
@@ -297,20 +315,47 @@ export function App() {
                   ))}
                 </ul>
               </div>
-              <button
-                onClick={() =>
-                  void runAction("Evidence note", () =>
-                    addEvidence(selectedBrief.id, {
-                      title: "Manual evidence note",
-                      content_text:
-                        "Add examples, process details, and proof points here from the dashboard.",
-                      evidence_type: "note"
+              <div className="section-block">
+                <h4>Attached Evidence</h4>
+                <div className="stack-list compact">
+                  {workflow.evidence.filter((item) => item.opportunity_brief_id === selectedBrief.id).map((item) => (
+                    <div key={item.id} className="link-card">
+                      <strong>{item.title}</strong>
+                      <span>{item.content_text ?? item.evidence_type}</span>
+                    </div>
+                  ))}
+                  {workflow.evidence.filter((item) => item.opportunity_brief_id === selectedBrief.id).length === 0 && (
+                    <div className="empty">No evidence attached yet.</div>
+                  )}
+                </div>
+              </div>
+              <div className="evidence-form">
+                <input
+                  value={evidenceTitle}
+                  onChange={(event) => setEvidenceTitle(event.target.value)}
+                  placeholder="Evidence title"
+                />
+                <textarea
+                  value={evidenceBody}
+                  onChange={(event) => setEvidenceBody(event.target.value)}
+                  placeholder="Paste proof points, process notes, deliverables, or examples here."
+                />
+                <button
+                  onClick={() =>
+                    void runAction("Evidence note", async () => {
+                      await addEvidence(selectedBrief.id, {
+                        title: evidenceTitle || "Manual evidence note",
+                        content_text: evidenceBody || "Evidence note",
+                        evidence_type: "note"
+                      });
+                      setEvidenceTitle("");
+                      setEvidenceBody("");
                     })
-                  )
-                }
-              >
-                Add Placeholder Evidence Note
-              </button>
+                  }
+                >
+                  Attach Evidence Note
+                </button>
+              </div>
             </div>
           ) : (
             <div className="empty">Generate a brief to inspect the human editing target.</div>
@@ -354,6 +399,14 @@ export function App() {
                 <p>
                   Missing: {(selectedReview.review_json.missing_evidence_items ?? []).join(", ") || "None"}
                 </p>
+              </div>
+              <div className="action-row">
+                <button disabled={!selectedDraft} onClick={() => void runAction("Review", () => triggerReview(selectedDraft!.id))}>
+                  Re-Run Review
+                </button>
+                <button disabled={!selectedDraft} onClick={() => void runAction("Revision", () => triggerRevision(selectedDraft!.id))}>
+                  Revise
+                </button>
               </div>
             </div>
           ) : (

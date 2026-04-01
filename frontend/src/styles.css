@@ -202,12 +202,18 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 11px 12px;
   border-radius: 14px;
   border: 1px solid var(--border);
   background: white;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 button {
@@ -352,6 +358,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.evidence-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .empty,

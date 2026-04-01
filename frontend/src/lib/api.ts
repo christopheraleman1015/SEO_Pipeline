@@ -124,6 +124,17 @@ export type PublisherConfig = {
   updated_at: string;
 };
 
+export type OpportunityEvidence = {
+  id: string;
+  opportunity_brief_id: string;
+  evidence_type: string;
+  title: string;
+  content_text: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
 async function readJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, init);
   if (!response.ok) {
@@ -262,4 +273,8 @@ export function addEvidence(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+}
+
+export function fetchEvidence(briefId: string): Promise<OpportunityEvidence[]> {
+  return readJson<OpportunityEvidence[]>(`/opportunity-briefs/${briefId}/evidence`);
 }
