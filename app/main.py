@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import audits, briefs, clustering, clusters, health, ingestion, internal_links, jobs, opportunity_briefs, opportunity_drafts, opportunity_evidence, opportunity_publications, opportunity_revisions, opportunity_reviews, projects, publisher_configs, refresh, scoring
+from app.api import audits, briefs, clustering, clusters, health, ingestion, internal_links, jobs, opportunity_briefs, opportunity_drafts, opportunity_evidence, opportunity_publications, opportunity_revisions, opportunity_reviews, projects, publisher_configs, refresh, scoring, workflow
 from app.logging import configure_logging
 
 configure_logging()
@@ -32,4 +32,5 @@ app.include_router(opportunity_reviews.router)
 app.include_router(opportunity_revisions.router)
 app.include_router(refresh.router)
 app.include_router(scoring.router)
+app.include_router(workflow.router)
 app.include_router(jobs.router)

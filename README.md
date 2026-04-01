@@ -28,6 +28,31 @@ alembic upgrade head
 python -m app.bootstrap_db
 ```
 
+## Dashboard
+
+Frontend lives in `frontend/` and uses React + Vite.
+
+Suggested local run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Backend:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The dashboard currently supports:
+- project creation and selection
+- workflow overview counts
+- cluster / brief / draft / review / publication visibility
+- runtime publisher config entry for WordPress or generic REST
+- action triggers for scoring, clustering, internal links, brief generation, draft generation, review, revision, approval, and publish
+
 ## Local dev fallback
 
 If Postgres and Redis are not available locally, you can use:

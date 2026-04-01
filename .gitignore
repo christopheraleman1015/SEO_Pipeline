@@ -17,3 +17,4 @@ pip-ephem-wheel-cache-*/
 pip-install-*/
 node_modules/
 frontend/dist/
+*.tsbuildinfo
